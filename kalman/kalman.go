@@ -5,18 +5,18 @@ import (
 )
 
 type Filter struct {
-	motionModel *mat.Dense
-	motionErrorModel *mat.Dense
-	measurementModel *mat.Dense
+	motionModel           *mat.Dense
+	motionErrorModel      *mat.Dense
+	measurementModel      *mat.Dense
 	measurementErrorModel *mat.Dense
 }
 
 type State struct {
-	state *mat.VecDense
+	state      *mat.VecDense
 	covariance *mat.Dense
 }
 
-func (filter Filter) filterState(measurement mat.VecDense, previousState State) State {
+func (filter Filter) FilterState(measurement mat.VecDense, previousState State) State {
 	// Prediction
 	var state mat.VecDense
 	state.MulVec(filter.motionModel, previousState.state)
@@ -24,7 +24,6 @@ func (filter Filter) filterState(measurement mat.VecDense, previousState State) 
 	covariance.Mul(filter.motionModel, previousState.covariance)
 	covariance.Mul(&covariance, filter.motionModel.T())
 	covariance.Add(&covariance, filter.motionErrorModel)
-
 
 	// Filtration
 	var errorCovariance mat.Dense
@@ -56,11 +55,11 @@ func (filter Filter) filterState(measurement mat.VecDense, previousState State) 
 	return State{&state, &covariance}
 }
 
-func (filter Filter) filterStates(measurements []mat.VecDense, initialState State) []State {
+func (filter Filter) FilterStates(measurements []mat.VecDense, initialState State) []State {
 	currentState := initialState
 	var filteredStates []State
 	for _, measurement := range measurements {
-		currentState = filter.filterState(measurement, currentState)
+		currentState = filter.FilterState(measurement, currentState)
 		filteredStates = append(filteredStates, currentState)
 	}
 	return filteredStates
