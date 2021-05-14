@@ -1,6 +1,7 @@
 package kalman
 
 import (
+	"fmt"
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -28,7 +29,12 @@ func (filter Filter) FilterState(measurement mat.VecDense, previousState State) 
 	// Filtration
 	var errorCovariance mat.Dense
 	errorCovariance.Mul(filter.MeasurementModel, &covariance)
-	errorCovariance.Mul(&errorCovariance, (&covariance).T())
+	fmt.Println(covariance.Dims())
+	fmt.Println(errorCovariance.Dims())
+	fmt.Println(filter.MeasurementModel.Dims())
+	fmt.Println(filter.MeasurementModel.T().Dims())
+	errorCovariance.Mul(&errorCovariance, filter.MeasurementModel.T())
+	fmt.Println(errorCovariance.Dims())
 	errorCovariance.Add(&errorCovariance, filter.MeasurementErrorModel)
 
 	var inverseErrorCovariance mat.Dense

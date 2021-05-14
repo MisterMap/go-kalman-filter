@@ -2,6 +2,7 @@ package kalman
 
 import (
 	"gonum.org/v1/gonum/mat"
+	"math"
 	"reflect"
 	"testing"
 )
@@ -17,13 +18,24 @@ func TestFilter_FilterState(t *testing.T) {
 		measurement   mat.VecDense
 		previousState State
 	}
+	fields1 := fields{mat.NewDense(2, 2, []float64{1, 0, 0, 1}),
+		mat.NewDense(2, 2, []float64{1, 0, 0, 1}),
+		mat.NewDense(1, 2, []float64{1, 0}),
+		mat.NewDense(1, 1, []float64{1})}
+	args1 := args{*mat.NewVecDense(1, []float64{1}),
+		State{mat.NewVecDense(2, []float64{1, 1}),
+			mat.NewDense(2, 2, []float64{1, 0, 0, 1})}}
+	want1 := State{mat.NewVecDense(2, []float64{1, 1}),
+		mat.NewDense(2, 2, []float64{1, 0, 0, 1})}
 	tests := []struct {
 		name   string
 		fields fields
 		args   args
 		want   State
-	}{
-		// TODO: Add test cases.
+	}{{"simpleFilter",
+		fields1,
+		args1,
+		want1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,4 +84,15 @@ func TestFilter_FilterStates(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAbs(t *testing.T) {
+	got := math.Abs(-1)
+	if got != 1 {
+		t.Errorf("Abs(-1) = %v; want 1", got)
+	}
+}
+
+func TestMakeSimpleKalmanFilter(t *testing.T) {
+
 }
