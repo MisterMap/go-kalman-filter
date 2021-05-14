@@ -5,31 +5,31 @@ import (
 )
 
 type Filter struct {
-	motionModel           *mat.Dense
-	motionErrorModel      *mat.Dense
-	measurementModel      *mat.Dense
-	measurementErrorModel *mat.Dense
+	MotionModel           *mat.Dense
+	MotionErrorModel      *mat.Dense
+	MeasurementModel      *mat.Dense
+	MeasurementErrorModel *mat.Dense
 }
 
 type State struct {
-	state      *mat.VecDense
-	covariance *mat.Dense
+	State      *mat.VecDense
+	Covariance *mat.Dense
 }
 
 func (filter Filter) FilterState(measurement mat.VecDense, previousState State) State {
 	// Prediction
 	var state mat.VecDense
-	state.MulVec(filter.motionModel, previousState.state)
+	state.MulVec(filter.MotionModel, previousState.State)
 	var covariance mat.Dense
-	covariance.Mul(filter.motionModel, previousState.covariance)
-	covariance.Mul(&covariance, filter.motionModel.T())
-	covariance.Add(&covariance, filter.motionErrorModel)
+	covariance.Mul(filter.MotionModel, previousState.Covariance)
+	covariance.Mul(&covariance, filter.MotionModel.T())
+	covariance.Add(&covariance, filter.MotionErrorModel)
 
 	// Filtration
 	var errorCovariance mat.Dense
-	errorCovariance.Mul(filter.measurementModel, &covariance)
+	errorCovariance.Mul(filter.MeasurementModel, &covariance)
 	errorCovariance.Mul(&errorCovariance, (&covariance).T())
-	errorCovariance.Add(&errorCovariance, filter.measurementErrorModel)
+	errorCovariance.Add(&errorCovariance, filter.MeasurementErrorModel)
 
 	var inverseErrorCovariance mat.Dense
 	err := inverseErrorCovariance.Inverse(&errorCovariance)
@@ -37,18 +37,18 @@ func (filter Filter) FilterState(measurement mat.VecDense, previousState State) 
 		return State{}
 	}
 	var kalmanGain mat.Dense
-	kalmanGain.Mul(&covariance, filter.measurementModel.T())
+	kalmanGain.Mul(&covariance, filter.MeasurementModel.T())
 	kalmanGain.Mul(&kalmanGain, &inverseErrorCovariance)
 
 	var measurementState mat.VecDense
-	measurementState.MulVec(filter.measurementModel, &state)
+	measurementState.MulVec(filter.MeasurementModel, &state)
 	measurementState.SubVec(&measurement, &measurementState)
 	measurementState.MulVec(&kalmanGain, &measurementState)
 	state.AddVec(&state, &measurementState)
 
 	var measurementCovariance mat.Dense
 	eyeMatrix := mat.NewDiagDense(state.Len(), make([]float64, state.Len()))
-	measurementCovariance.Mul(&kalmanGain, filter.measurementModel)
+	measurementCovariance.Mul(&kalmanGain, filter.MeasurementModel)
 	measurementCovariance.Sub(eyeMatrix, &measurementCovariance)
 	covariance.Mul(&measurementCovariance, &covariance)
 
@@ -63,4 +63,24 @@ func (filter Filter) FilterStates(measurements []mat.VecDense, initialState Stat
 		filteredStates = append(filteredStates, currentState)
 	}
 	return filteredStates
+}
+
+func MakeSimpleKalmanFilter(timeDelta float64, motionNoise float64, measurementNoise float64) Filter {
+	motionModel := mat.NewDense(2, 2, []float64{1, 0, timeDelta, 1})
+
+	stateMotionErrorModel := mat.NewDense(2, 1, []float64{timeDelta * timeDelta / 2, timeDelta})
+	var motionErrorModel mat.Dense
+	motionErrorModel.Mul(stateMotionErrorModel, stateMotionErrorModel.T())
+	motionErrorModel.Scale(motionNoise*motionNoise, &motionErrorModel)
+
+	measurementModel := mat.NewDense(1, 2, []float64{1, 0})
+
+	measurementErrorModel := mat.NewDense(1, 1, []float64{measurementNoise * measurementNoise})
+	filter := Filter{
+		MotionModel:           motionModel,
+		MotionErrorModel:      &motionErrorModel,
+		MeasurementModel:      measurementModel,
+		MeasurementErrorModel: measurementErrorModel,
+	}
+	return filter
 }
