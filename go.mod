@@ -1,4 +1,4 @@
-module go-kalman-filter
+module github.com/MisterMap/kalman-go
 
 go 1.16
 
