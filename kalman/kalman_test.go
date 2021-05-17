@@ -24,9 +24,9 @@ func TestFilter_FilterState(t *testing.T) {
 		mat.NewDense(1, 1, []float64{1})}
 	args1 := args{*mat.NewVecDense(1, []float64{1}),
 		State{mat.NewVecDense(2, []float64{1, 1}),
-			mat.NewDense(2, 2, []float64{1, 0, 0, 1})}}
+			mat.NewDense(2, 2, []float64{2, 0, 0, 2})}}
 	want1 := State{mat.NewVecDense(2, []float64{1, 1}),
-		mat.NewDense(2, 2, []float64{1, 0, 0, 1})}
+		mat.NewDense(2, 2, []float64{0.75, 0, 0, 3})}
 	tests := []struct {
 		name   string
 		fields fields
