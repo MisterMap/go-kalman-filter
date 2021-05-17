@@ -71,7 +71,7 @@ func (filter Filter) FilterStates(measurements []mat.VecDense, initialState Stat
 }
 
 func MakeSimpleKalmanFilter(timeDelta float64, motionNoise float64, measurementNoise float64) Filter {
-	motionModel := mat.NewDense(2, 2, []float64{1, 0, timeDelta, 1})
+	motionModel := mat.NewDense(2, 2, []float64{1, timeDelta, 0, 1})
 
 	stateMotionErrorModel := mat.NewDense(2, 1, []float64{timeDelta * timeDelta / 2, timeDelta})
 	var motionErrorModel mat.Dense
